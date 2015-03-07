@@ -2978,6 +2978,16 @@ module ts {
             return links.resolvedType;
         }
 
+
+        function getTypeFromAnnotationTypeNode(anno: any) {
+            var node = anno.type;
+            var links = getNodeLinks(node);
+            if (!links.resolvedType) {
+                links.resolvedType = createObjectType(TypeFlags.Anonymous, node.symbol);
+            }
+            return links.resolvedType;
+        }
+
         function getStringLiteralType(node: LiteralExpression): StringLiteralType {
             if (hasProperty(stringLiteralTypes, node.text)) {
                 return stringLiteralTypes[node.text];
@@ -3032,6 +3042,9 @@ module ts {
                 case SyntaxKind.QualifiedName:
                     var symbol = getSymbolInfo(node);
                     return symbol && getDeclaredTypeOfSymbol(symbol);
+                case SyntaxKind.AnnotationToken:
+                    console.log('getting type from annotation');
+                    return getTypeFromAnnotationTypeNode(node);
                 default:
                     return unknownType;
             }
@@ -5990,6 +6003,9 @@ module ts {
                 else if (node.kind === SyntaxKind.NewExpression) {
                     links.resolvedSignature = resolveNewExpression(<NewExpression>node, candidatesOutArray);
                 }
+                else if (node.kind === SyntaxKind.AnnotationToken) {
+                    links.resolvedSignature = resolveNewExpression(<NewExpression>node, candidatesOutArray);
+                }
                 else if (node.kind === SyntaxKind.TaggedTemplateExpression) {
                     links.resolvedSignature = resolveTaggedTemplateExpression(<TaggedTemplateExpression>node, candidatesOutArray);
                 }
@@ -6686,6 +6702,7 @@ module ts {
                     return checkIndexedAccess(<ElementAccessExpression>node);
                 case SyntaxKind.CallExpression:
                 case SyntaxKind.NewExpression:
+                case SyntaxKind.AnnotationToken:
                     return checkCallExpression(<CallExpression>node);
                 case SyntaxKind.TaggedTemplateExpression:
                     return checkTaggedTemplateExpression(<TaggedTemplateExpression>node);
@@ -6726,6 +6743,11 @@ module ts {
             }
             // TODO: Check multiple declarations are identical
         }
+
+        function checkAnnotation(annoationDeclaration: AnnotationDeclaration) {
+            checkExpression(annoationDeclaration);
+        }
+
 
         function checkParameter(parameterDeclaration: ParameterDeclaration) {
             checkVariableOrParameterDeclaration(parameterDeclaration);
@@ -8604,6 +8626,10 @@ module ts {
                     return checkImportDeclaration(<ImportDeclaration>node);
                 case SyntaxKind.ExportAssignment:
                     return checkExportAssignment(<ExportAssignment>node);
+                case SyntaxKind.AnnotationToken:
+                    console.log('check annotation');
+                    checkAnnotation(<AnnotationDeclaration>node);
+
             }
         }
 
@@ -8691,6 +8717,7 @@ module ts {
         }
 
         // Fully type check a source file and collect the relevant diagnostics.
+        // @todo - this is where diagnostics of files are got
         function checkSourceFile(node: SourceFile) {
             var links = getNodeLinks(node);
             if (!(links.flags & NodeCheckFlags.TypeChecked)) {
@@ -8863,6 +8890,9 @@ module ts {
                 case SyntaxKind.NumberKeyword:
                 case SyntaxKind.StringKeyword:
                 case SyntaxKind.BooleanKeyword:
+                    return true;
+                case SyntaxKind.AnnotationToken:
+                    console.log('isTypeNode AnnotationToken');
                     return true;
                 case SyntaxKind.VoidKeyword:
                     return node.parent.kind !== SyntaxKind.VoidExpression;

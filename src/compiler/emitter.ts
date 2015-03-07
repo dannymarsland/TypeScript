@@ -903,7 +903,9 @@ module ts {
                 emitLines(node.members);
                 decreaseIndent();
                 write("}");
+                emitLines(node.annotations);
                 writeLine();
+
                 enclosingDeclaration = prevEnclosingDeclaration;
             }
         }
@@ -934,6 +936,11 @@ module ts {
             emitClassMemberDeclarationFlags(node);
             emitVariableDeclaration(<VariableDeclaration>node);
             write(";");
+            writeLine();
+        }
+
+        function emitAnnotation(annotationNode: any) {
+            write("wrong annotation type");
             writeLine();
         }
 
@@ -1345,6 +1352,8 @@ module ts {
                 case SyntaxKind.FunctionDeclaration:
                 case SyntaxKind.Method:
                     return emitFunctionDeclaration(<FunctionLikeDeclaration>node);
+                case SyntaxKind.AnnotationToken:
+                    return emitAnnotation(<AnnotationDeclaration>node);
                 case SyntaxKind.ConstructSignature:
                 case SyntaxKind.CallSignature:
                 case SyntaxKind.IndexSignature:
@@ -2836,6 +2845,10 @@ module ts {
                     emit(node.name);
                 }
                 emitSignatureAndBody(node);
+                if (node.kind === SyntaxKind.FunctionDeclaration || (node.kind === SyntaxKind.FunctionExpression && node.name)) {
+                    //writeLine();
+                    //emitFunctionAnnotations(node, node.annotations);
+                }
                 if (node.kind !== SyntaxKind.Method) {
                     emitTrailingComments(node);
                 }
@@ -2993,6 +3006,20 @@ module ts {
                         emitEnd(member);
                         emitTrailingComments(member);
                     }
+
+
+
+
+                });
+            }
+
+            function emitMemberPropertyAnnotations(node: ClassDeclaration) {
+                emitInitialiseClassPropertyAnnotations(node);
+                emitInitialiseClassStaticPropertyAnnotations(node);
+                forEach(node.members, (member:PropertyDeclaration) => {
+                    if (member.kind === SyntaxKind.Property && member.annotations) {
+                        emitPropertyAnnotations(node, member,member.annotations)
+                    }
                 });
             }
 
@@ -3019,6 +3046,8 @@ module ts {
                         emitEnd(member);
                         emitEnd(member);
                         write(";");
+                        emitClassMethodAnnotations(node, <MethodDeclaration>member, (<MethodDeclaration>member).annotations);
+
                         emitTrailingComments(member);
                     }
                     else if (member.kind === SyntaxKind.GetAccessor || member.kind === SyntaxKind.SetAccessor) {
@@ -3072,6 +3101,230 @@ module ts {
                 });
             }
 
+            //function emitMemberAnnotations(node: ClassDeclaration) {
+            //    forEach(node.members, member => {
+            //        if (member.kind === SyntaxKind.AnnotationToken) {
+            //            emitClassAnnotation(node, member);
+            //        }
+            //    });
+            //}
+
+            function emitClassAnnotationsArray(classNode: ClassDeclaration) {
+                emitNode(classNode.name);
+                write(".prototype");
+                write(".__annotations");
+            }
+
+            function emitClassPropertyAnnotationsArray(classNode: ClassDeclaration) {
+                emitNode(classNode.name);
+                write(".prototype");
+                write(".__propertyAnnotations");
+            }
+
+            function emitClassStaticPropertyAnnotationsArray(classNode: ClassDeclaration) {
+                emitNode(classNode.name);
+                write(".prototype");
+                write(".__staticPropertyAnnotations");
+            }
+
+            function emitClassPropertyAnnotationsArrayForProperty(classNode: ClassDeclaration, propertyNode: PropertyDeclaration) {
+                if ((propertyNode.flags & NodeFlags.Static)) {
+                    emitClassStaticPropertyAnnotationsArray(classNode);
+                } else {
+                    emitClassPropertyAnnotationsArray(classNode);
+                }
+                write(".");
+                emitNode(propertyNode.name);
+            }
+
+            function emitClassConstructorAnnotationsArray(classNode: ClassDeclaration) {
+                emitNode(classNode.name);
+                write(".constructor.__annotations");
+            }
+
+            function emitClassMethodAnnotationsArray(classNode: ClassDeclaration, methodNode: MethodDeclaration) {
+                emitNode(classNode.name);
+                if (!(methodNode.flags & NodeFlags.Static)) {
+                    write(".prototype");
+                }
+                write(".");
+                emitNode(methodNode.name);
+                write(".__annotations");
+            }
+
+            function emitClassMethodParametersArray(classNode: ClassDeclaration, methodNode: MethodDeclaration) {
+                emitNode(classNode.name);
+                if (!(methodNode.flags & NodeFlags.Static)) {
+                    write(".prototype");
+                }
+                write(".");
+                emitNode(methodNode.name);
+                write(".__parameters");
+            }
+
+            function emitFunctionAnnotationsArray(functionNode: FunctionLikeDeclaration) {
+                emitNode(functionNode.name);
+                write(".__annotations");
+            }
+
+            function emitInitialiseFunctionAnnotations(functionNode: FunctionLikeDeclaration) {
+                writeLine();
+                emitFunctionAnnotationsArray(functionNode);
+                write(" = [];");
+                writeLine();
+            }
+
+            function emitInitialiseClassAnnotations(classNode: ClassDeclaration) {
+                writeLine();
+                emitClassAnnotationsArray(classNode);
+                write(" = [];");
+                writeLine();
+            }
+
+            function emitInitialiseClassPropertyAnnotations(classNode: ClassDeclaration) {
+                writeLine();
+                emitClassPropertyAnnotationsArray(classNode);
+                write(" = [];");
+                writeLine();
+            }
+
+            function emitInitialiseClassStaticPropertyAnnotations(classNode: ClassDeclaration) {
+                writeLine();
+                emitClassStaticPropertyAnnotationsArray(classNode);
+                write(" = [];");
+                writeLine();
+            }
+
+            function emitInitialiseClassPropertyAnnotationsForProperty(classNode: ClassDeclaration, propertyNode: PropertyDeclaration) {
+                writeLine();
+                emitClassPropertyAnnotationsArrayForProperty(classNode, propertyNode);
+                write(" = [];");
+                writeLine();
+            }
+
+            function emitInitialiseClassConstructorAnnotations(classNode: ClassDeclaration) {
+                writeLine();
+                emitClassConstructorAnnotationsArray(classNode);
+                write(" = [];");
+                writeLine();
+            }
+
+            function emitInitialiseClassMethodAnnotations(classNode: ClassDeclaration, methodNode: MethodDeclaration) {
+                writeLine();
+                emitClassMethodAnnotationsArray(classNode, methodNode);
+                write(" = [];");
+                writeLine();
+            }
+
+            function emitInitialiseClassMethodParameters(classNode: ClassDeclaration, methodNode: MethodDeclaration) {
+                writeLine();
+                emitClassMethodParametersArray(classNode, methodNode);
+                write(" = [];");
+                writeLine();
+            }
+
+
+            function emitClassAnnotations(classNode: ClassDeclaration , annotationNodes: AnnotationDeclaration[]) {
+                if (annotationNodes.length) {
+                    emitInitialiseClassAnnotations(classNode);
+                    forEach(annotationNodes, (annotationNode)=>{
+                        writeLine();
+                        //emitStart(annotationNode);
+                        emitClassAnnotationsArray(classNode);
+                        write(".push(");
+                        emitNewExpression(<NewExpression>annotationNode);
+                        write(");");
+                        writeLine();
+                        //emitEnd(annotationNode);
+                    });
+                }
+            }
+
+
+            function emitClassConstructorAnnotations(classNode: ClassDeclaration , annotationNodes: AnnotationDeclaration[]) {
+                if (annotationNodes.length) {
+                    emitInitialiseClassConstructorAnnotations(classNode);
+                    forEach(annotationNodes, (annotationNode)=>{
+                        writeLine();
+                        //emitStart(annotationNode);
+                        emitClassConstructorAnnotationsArray(classNode);
+                        write(".push(");
+                        emitNewExpression(<NewExpression>annotationNode);
+                        write(");");
+                        writeLine();
+                        //emitEnd(annotationNode);
+                    });
+                }
+            }
+
+            function emitClassMethodAnnotations(classNode: ClassDeclaration , methodNode: MethodDeclaration, annotationNodes: AnnotatedDeclaration[]) {
+                if (annotationNodes.length) {
+                    if(methodNode.parameters.length) {
+                        emitInitialiseClassMethodParameters(classNode, methodNode);
+                        forEach(methodNode.parameters, (parameter)=>{
+                            writeLine();
+                            emitClassMethodParametersArray(classNode,methodNode);
+                            write(".push( function(){ return ");
+                            var type :any = parameter.type;
+                            if (type && type.typeName) {
+                                var str = <string> (type.typeName.text);
+                                write("typeof " + str + " != 'undefined' ? " + str + " : undefined" );
+
+                            } else {
+                                write("undefined");
+                            }
+                            write(" });");
+                            writeLine();
+                        })
+
+                    }
+                    emitInitialiseClassMethodAnnotations(classNode, methodNode);
+                    forEach(annotationNodes, (annotationNode)=>{
+                        writeLine();
+                        //emitStart(annotationNode);
+                        emitClassMethodAnnotationsArray(classNode, methodNode);
+                        write(".push(");
+                        emitNewExpression(<NewExpression>annotationNode);
+                        write(");");
+                        writeLine();
+                        //emitEnd(annotationNode);
+                    });
+                }
+            }
+
+            function emitPropertyAnnotations(classNode: ClassDeclaration , propertyNode: PropertyDeclaration, annotationNodes: AnnotatedDeclaration[]) {
+                if (annotationNodes.length) {
+                    emitInitialiseClassPropertyAnnotationsForProperty(classNode, propertyNode);
+                    forEach(annotationNodes, (annotationNode)=>{
+                        writeLine();
+                        emitClassPropertyAnnotationsArrayForProperty(classNode, propertyNode);
+                        write(".push(");
+                        emitNewExpression(<NewExpression>annotationNode);
+                        write(");");
+                        writeLine();
+                    });
+                }
+            }
+
+            function emitFunctionAnnotations(functionNode: FunctionLikeDeclaration , annotationNodes: AnnotationDeclaration[]) {
+                if (annotationNodes.length) {
+                    emitInitialiseFunctionAnnotations(functionNode);
+                    forEach(annotationNodes, (annotationNode)=>{
+                        writeLine();
+                        //emitStart(annotationNode);
+                        emitFunctionAnnotationsArray(functionNode);
+                        write(".push(");
+                        emitNewExpression(<NewExpression>annotationNode);
+                        write(");");
+                        writeLine();
+                        //emitEnd(annotationNode);
+                    });
+                }
+
+            }
+
+
+
             function emitClassDeclaration(node: ClassDeclaration) {
                 emitLeadingComments(node);
                 write("var ");
@@ -3096,6 +3349,8 @@ module ts {
                 emitConstructorOfClass();
                 emitMemberFunctions(node);
                 emitMemberAssignments(node, NodeFlags.Static);
+                emitMemberPropertyAnnotations(node)
+                emitClassAnnotations(node, node.annotations);
                 writeLine();
                 function emitClassReturnStatement() {
                     write("return ");
@@ -3180,6 +3435,10 @@ module ts {
                     }
                     decreaseIndent();
                     emitToken(SyntaxKind.CloseBraceToken, ctor ? (<Block>ctor.body).statements.end : node.members.end);
+                    if (ctor) {
+                        emitClassConstructorAnnotations(node, ctor.annotations);
+                    }
+
                     scopeEmitEnd();
                     emitEnd(<Node>ctor || node);
                     if (ctor) {
@@ -3468,6 +3727,10 @@ module ts {
                 // Start new file on new line
                 writeLine();
                 emitDetachedComments(node);
+                writeLine();
+                write("Function.prototype.getAnnotations = Function.prototype.getAnnotations || function () {return this.__annotations || []; }");
+                writeLine();
+                write("Function.prototype.getParameters = Function.prototype.getParameters || function () {return this.__parameters || []; }");
 
                 // emit prologue directives prior to __extends
                 var startIndex = emitDirectivePrologues(node.statements, /*startWithNewLine*/ false);
@@ -3645,6 +3908,8 @@ module ts {
                         return emitImportDeclaration(<ImportDeclaration>node);
                     case SyntaxKind.SourceFile:
                         return emitSourceFile(<SourceFile>node);
+                    //case SyntaxKind.AnnotationToken:
+                    //    return emitAnnotation(<AnnotationDeclaration>node);
                 }
 
                 // Emit node which needs to be emitted differently depended on ScriptTarget

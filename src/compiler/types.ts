@@ -139,6 +139,7 @@ module ts {
         NumberKeyword,
         SetKeyword,
         StringKeyword,
+        AnnotationToken,
         TypeKeyword,
 
         // Parse tree nodes
@@ -393,7 +394,7 @@ module ts {
         initializer?: Expression;
     }
 
-    export interface PropertyDeclaration extends Declaration, ClassElement {
+    export interface PropertyDeclaration extends Declaration, ClassElement, AnnotatedDeclaration {
         _propertyDeclarationBrand: any;
         questionToken?: Node;
         type?: TypeNode;
@@ -427,7 +428,7 @@ module ts {
      *  MethodDeclaration
      *  AccessorDeclaration
      */
-    export interface FunctionLikeDeclaration extends SignatureDeclaration {
+    export interface FunctionLikeDeclaration extends SignatureDeclaration, AnnotatedDeclaration {
         _functionLikeDeclarationBrand: any;
 
         asteriskToken?: Node;
@@ -750,11 +751,15 @@ module ts {
         _moduleElementBrand: any;
     }
 
-    export interface ClassDeclaration extends Declaration, ModuleElement {
+    export interface ClassDeclaration extends Declaration, ModuleElement, AnnotatedDeclaration {
         name: Identifier;
         typeParameters?: NodeArray<TypeParameterDeclaration>;
         heritageClauses?: NodeArray<HeritageClause>;
         members: NodeArray<ClassElement>;
+    }
+
+    export interface AnnotatedDeclaration {
+        annotations?: AnnotationDeclaration[];
     }
 
     export interface ClassElement extends Declaration {
@@ -805,6 +810,11 @@ module ts {
         // 'EntityName' for an internal module reference, 'ExternalModuleReference' for an external
         // module reference.
         moduleReference: EntityName | ExternalModuleReference;
+    }
+
+    export interface AnnotationDeclaration extends Declaration, ModuleElement, CallExpression, NewExpression {
+        _classElementBrand: any;
+        type : Node;
     }
 
     export interface ExternalModuleReference extends Node {

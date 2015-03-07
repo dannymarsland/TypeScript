@@ -148,6 +148,7 @@ module ts {
         "&=": SyntaxKind.AmpersandEqualsToken,
         "|=": SyntaxKind.BarEqualsToken,
         "^=": SyntaxKind.CaretEqualsToken,
+        "@": SyntaxKind.AnnotationToken
     };
 
     /*
@@ -1067,6 +1068,8 @@ module ts {
                         }
                         error(Diagnostics.Invalid_character);
                         return pos++, token = SyntaxKind.Unknown;
+                    case CharacterCodes.at:
+                        return pos++, token = SyntaxKind.AnnotationToken;
                     default:
                         if (isIdentifierStart(ch)) {
                             pos++;

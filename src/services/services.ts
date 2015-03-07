@@ -2763,6 +2763,7 @@ module ts {
                         case SyntaxKind.GetKeyword:
                         case SyntaxKind.SetKeyword:
                         case SyntaxKind.ImportKeyword:
+                        case SyntaxKind.AnnotationToken:
                             return true;
                     }
 

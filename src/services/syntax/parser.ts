@@ -2953,6 +2953,7 @@ module TypeScript.Parser {
                 case SyntaxKind.OpenParenToken:
                     return parseParenthesizedExpression(_currentToken);
                 case SyntaxKind.NewKeyword:
+                case SyntaxKind.AnnotationToken:
                     return parseObjectCreationExpression(_currentToken);
                 case SyntaxKind.NoSubstitutionTemplateToken:
                 case SyntaxKind.TemplateStartToken:

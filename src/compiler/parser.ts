@@ -125,6 +125,7 @@ module ts {
                     child((<ElementAccessExpression>node).argumentExpression);
             case SyntaxKind.CallExpression:
             case SyntaxKind.NewExpression:
+            case SyntaxKind.AnnotationToken:
                 return child((<CallExpression>node).expression) ||
                     children((<CallExpression>node).typeArguments) ||
                     children((<CallExpression>node).arguments);
@@ -424,6 +425,7 @@ module ts {
         var identifierCount = 0;
         var nodeCount = 0;
         var lineStarts: number[];
+        var currentAnnotations: AnnotationDeclaration[] = [];
 
         // Flags that dictate what parsing context we're in.  For example:
         // Whether or not we are in strict parsing mode.  All that changes in strict parsing mode is
@@ -1730,6 +1732,7 @@ module ts {
                 case SyntaxKind.OpenBracketToken:
                 case SyntaxKind.LessThanToken:
                 case SyntaxKind.NewKeyword:
+                case SyntaxKind.AnnotationToken:
                     return true;
                 case SyntaxKind.OpenParenToken:
                     // Only consider '(' the start of a type if followed by ')', '...', an identifier, a modifier,
@@ -1859,6 +1862,7 @@ module ts {
                 case SyntaxKind.OpenBraceToken:
                 case SyntaxKind.FunctionKeyword:
                 case SyntaxKind.NewKeyword:
+                case SyntaxKind.AnnotationToken:
                 case SyntaxKind.SlashToken:
                 case SyntaxKind.SlashEqualsToken:
                 case SyntaxKind.PlusToken:
@@ -2689,6 +2693,7 @@ module ts {
                 case SyntaxKind.FunctionKeyword:
                     return parseFunctionExpression();
                 case SyntaxKind.NewKeyword:
+                case SyntaxKind.AnnotationToken:
                     return parseNewExpression();
                 case SyntaxKind.SlashToken:
                 case SyntaxKind.SlashEqualsToken:
@@ -3271,6 +3276,8 @@ module ts {
             node.name = parseIdentifier();
             fillSignature(SyntaxKind.ColonToken, /*yieldAndGeneratorParameterContext:*/ !!node.asteriskToken, /*requireCompleteParameterList:*/ false, node);
             node.body = parseFunctionBlockOrSemicolon(!!node.asteriskToken);
+            node.annotations = getAnnotations();
+            clearAnnotations();
             return finishNode(node);
         }
 
@@ -3280,6 +3287,8 @@ module ts {
             parseExpected(SyntaxKind.ConstructorKeyword);
             fillSignature(SyntaxKind.ColonToken, /*yieldAndGeneratorParameterContext:*/ false, /*requireCompleteParameterList:*/ false, node);
             node.body = parseFunctionBlockOrSemicolon(/*isGenerator:*/ false);
+            node.annotations = getAnnotations();
+            clearAnnotations();
             return finishNode(node);
         }
 
@@ -3291,6 +3300,8 @@ module ts {
             method.questionToken = questionToken;
             fillSignature(SyntaxKind.ColonToken, /*yieldAndGeneratorParameterContext:*/ !!asteriskToken, /*requireCompleteParameterList:*/ false, method);
             method.body = requireBlock ? parseFunctionBlock(!!asteriskToken, /*ignoreMissingOpenBrace:*/ false) : parseFunctionBlockOrSemicolon(!!asteriskToken);
+            method.annotations = getAnnotations();
+            clearAnnotations();
             return finishNode(method);
         }
 
@@ -3311,6 +3322,8 @@ module ts {
                 property.questionToken = questionToken;
                 property.type = parseTypeAnnotation();
                 property.initializer = allowInAnd(parseNonParameterInitializer);
+                property.annotations = getAnnotations();
+                clearAnnotations();
                 parseSemicolon();
                 return finishNode(property);
             }
@@ -3339,6 +3352,11 @@ module ts {
             }
 
             if (token === SyntaxKind.AsteriskToken) {
+                return true;
+            }
+
+            if (token === SyntaxKind.AnnotationToken) {
+                console.log('isClassMemberStart SyntaxKind.AnnotationToken');
                 return true;
             }
 
@@ -3423,6 +3441,9 @@ module ts {
             if (isIndexSignature()) {
                 return parseIndexSignatureDeclaration(fullStart, modifiers);
             }
+            if(token === SyntaxKind.AnnotationToken) {
+                return parseAnnotation(fullStart, modifiers);
+            }
             // It is very important that we check this *after* checking indexers because
             // the [ token can start an index signature or a computed property name
             if (isIdentifierOrKeyword() || token === SyntaxKind.StringLiteral || token === SyntaxKind.NumericLiteral ||
@@ -3438,6 +3459,8 @@ module ts {
             var node = <ClassDeclaration>createNode(SyntaxKind.ClassDeclaration, fullStart);
             setModifiers(node, modifiers);
             parseExpected(SyntaxKind.ClassKeyword);
+            node.annotations = getAnnotations();
+            clearAnnotations();
             node.name = parseIdentifier();
             node.typeParameters = parseTypeParameters();
             node.heritageClauses = parseHeritageClauses(/*isClassHeritageClause:*/ true);
@@ -3602,6 +3625,39 @@ module ts {
             return finishNode(node);
         }
 
+        function addAnnotation(annotation: AnnotationDeclaration) {
+            currentAnnotations.push(annotation);
+        }
+
+        function clearAnnotations() {
+            currentAnnotations = [];
+        }
+
+        function getAnnotations() : AnnotationDeclaration[]{
+            return currentAnnotations;
+        }
+
+        function parseAnnotation(fullStart: number, modifiers: ModifiersArray): AnnotationDeclaration {
+            console.log('parsing annotation');
+            // @todo i need _moduleElementBrand: any; ??
+            var node = <AnnotationDeclaration>createNode(SyntaxKind.AnnotationToken, fullStart);
+            setModifiers(node, modifiers);
+            parseExpected(SyntaxKind.AnnotationToken);
+            node.expression = parseMemberExpressionOrHigher();
+            node.typeArguments = tryParse(parseTypeArgumentsInExpression);
+            if (node.typeArguments || token === SyntaxKind.OpenParenToken) {
+                node.arguments = parseArgumentList();
+            }
+            parseSemicolon();
+            addAnnotation(node);
+
+            //node.type = node.expression.ty
+
+            return finishNode(node);
+        }
+
+
+
         function parseModuleReference() {
             return isExternalModuleReference()
                 ? parseExternalModuleReference()
@@ -3647,6 +3703,8 @@ module ts {
                 case SyntaxKind.VarKeyword:
                 case SyntaxKind.ConstKeyword:
                 case SyntaxKind.FunctionKeyword:
+                    return true;
+                case SyntaxKind.AnnotationToken:
                     return true;
                 case SyntaxKind.LetKeyword:
                     return isLetDeclaration(); 
@@ -3726,6 +3784,8 @@ module ts {
                     return parseModuleDeclaration(fullStart, modifiers);
                 case SyntaxKind.ImportKeyword:
                     return parseImportDeclaration(fullStart, modifiers);
+                case SyntaxKind.AnnotationToken:
+                    return parseAnnotation(fullStart, modifiers);
                 default:
                     Debug.fail("Mismatch between isDeclarationStart and parseDeclaration");
             }

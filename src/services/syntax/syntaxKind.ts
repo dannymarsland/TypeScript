@@ -52,6 +52,7 @@ module TypeScript {
         InKeyword,
         InstanceOfKeyword,
         NewKeyword,
+        AnnotationToken,
         NullKeyword,
         ReturnKeyword,
         SwitchKeyword,
