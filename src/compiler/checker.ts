@@ -4332,6 +4332,7 @@ module ts {
                     case SyntaxKind.ElementAccessExpression:
                     case SyntaxKind.CallExpression:
                     case SyntaxKind.NewExpression:
+                    case SyntaxKind.AnnotationToken:
                     case SyntaxKind.TypeAssertionExpression:
                     case SyntaxKind.ParenthesizedExpression:
                     case SyntaxKind.PrefixUnaryExpression:
@@ -4981,6 +4982,7 @@ module ts {
                     return getContextualTypeForReturnExpression(node);
                 case SyntaxKind.CallExpression:
                 case SyntaxKind.NewExpression:
+                case SyntaxKind.AnnotationToken:
                     return getContextualTypeForArgument(<CallExpression>parent, node);
                 case SyntaxKind.TypeAssertionExpression:
                     return getTypeFromTypeNode((<TypeAssertion>parent).type);
@@ -8673,6 +8675,7 @@ module ts {
                 case SyntaxKind.ElementAccessExpression:
                 case SyntaxKind.CallExpression:
                 case SyntaxKind.NewExpression:
+                case SyntaxKind.AnnotationToken:
                 case SyntaxKind.TaggedTemplateExpression:
                 case SyntaxKind.TemplateExpression:
                 case SyntaxKind.TemplateSpan:

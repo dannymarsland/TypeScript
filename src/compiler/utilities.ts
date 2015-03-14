@@ -386,6 +386,7 @@ module ts {
             case SyntaxKind.ElementAccessExpression:
             case SyntaxKind.CallExpression:
             case SyntaxKind.NewExpression:
+            case SyntaxKind.AnnotationToken:
             case SyntaxKind.TaggedTemplateExpression:
             case SyntaxKind.TypeAssertionExpression:
             case SyntaxKind.ParenthesizedExpression:

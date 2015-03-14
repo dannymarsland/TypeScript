@@ -2054,6 +2054,7 @@ module ts {
                     switch (parent.kind) {
                         case SyntaxKind.CallExpression:
                         case SyntaxKind.NewExpression:
+                        case SyntaxKind.AnnotationToken:
                             return (<CallExpression>parent).expression === template;
                         case SyntaxKind.ParenthesizedExpression:
                             return false;

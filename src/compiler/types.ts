@@ -139,7 +139,6 @@ module ts {
         NumberKeyword,
         SetKeyword,
         StringKeyword,
-        AnnotationToken,
         TypeKeyword,
 
         // Parse tree nodes
@@ -158,6 +157,7 @@ module ts {
         SetAccessor,
         CallSignature,
         ConstructSignature,
+        AnnotationToken,
         IndexSignature,
         // Type
         TypeReference,
