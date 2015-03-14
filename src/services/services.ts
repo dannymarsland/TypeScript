@@ -2109,7 +2109,7 @@ module ts {
         if (isRightSideOfPropertyAccess(node)) {
             node = node.parent;
         }
-        return node && node.parent && node.parent.kind === SyntaxKind.NewExpression && (<CallExpression>node.parent).expression === node;
+        return node && node.parent && (node.parent.kind === SyntaxKind.NewExpression || node.parent.kind === SyntaxKind.AnnotationToken )&& (<CallExpression>node.parent).expression === node;
     }
 
     function isNameOfModuleDeclaration(node: Node) {
@@ -3053,7 +3053,7 @@ module ts {
                             signature = candidateSignatures[0];
                         }
 
-                        var useConstructSignatures = callExpression.kind === SyntaxKind.NewExpression || callExpression.expression.kind === SyntaxKind.SuperKeyword;
+                        var useConstructSignatures = callExpression.kind === SyntaxKind.NewExpression || callExpression.kind === SyntaxKind.AnnotationToken || callExpression.expression.kind === SyntaxKind.SuperKeyword;
                         var allSignatures = useConstructSignatures ? type.getConstructSignatures() : type.getCallSignatures();
 
                         if (!contains(allSignatures, signature.target || signature)) {
