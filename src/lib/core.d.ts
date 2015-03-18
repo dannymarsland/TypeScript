@@ -107,6 +107,8 @@ interface Object {
       * @param v A property name.
       */
     propertyIsEnumerable(v: string): boolean;
+
+    getAnnotations<T>(v?: Function) : T[];
 }
 
 interface ObjectConstructor {
