@@ -108,11 +108,13 @@ interface Object {
       */
     propertyIsEnumerable(v: string): boolean;
 
-    getAnnotations<T extends Object>(v?: Constructor) : T[];
+    getAnnotations() : any[];
+
+    getAnnotation<T extends Object>(v: Constructor) : T;
 }
 
 interface Constructor {
-    new (...args): Object;
+    new (...args : any[]): Object;
 }
 
 interface ObjectConstructor {

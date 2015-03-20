@@ -3729,7 +3729,8 @@ module ts {
                 writeLine();
                 emitDetachedComments(node);
                 writeLine();
-                write("Object.prototype.getAnnotations = Object.prototype.getAnnotations || function (type) { var annotations = this.__annotations; if (type && annotations) { var ret = []; for( var i=0,l=annotations.length; i<l; i++ ) { var annotation = annotations[i]; if (annotation instanceof type) {ret.push(annotation); } } return ret; } else { return annotations ? annotations.slice(0) : []; } }");
+                write("Object.prototype.getAnnotations = Object.prototype.getAnnotations || function () { var a = this.__annotations; return a ? a.slice(0) : []; }");
+                write("Object.prototype.getAnnotation = Object.prototype.getAnnotation || function (type) { var a = this.__annotations; if (a) { for( var i=0,l=a.length; i<l; i++ ) { var annotation = a[i]; if (annotation instanceof type) {return annotation; } } } else { return null } }");
                 writeLine();
                 write("Function.prototype.getParameters = Function.prototype.getParameters || function () {return this.__parameters || []; }");
 
