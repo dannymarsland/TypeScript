@@ -117,6 +117,16 @@ interface Constructor {
     new (...args : any[]): Object;
 }
 
+
+interface Type {
+    isArray(): boolean;
+    getConstructor(): Constructor;
+    isString(): boolean;
+    isNumber(): boolean;
+    getName(): string;
+    instanceOf(type: Constructor): boolean;
+}
+
 interface ObjectConstructor {
     new (value?: any): Object;
     (): any;

@@ -3265,8 +3265,12 @@ module ts {
                         forEach(methodNode.parameters, (parameter)=>{
                             writeLine();
                             emitClassMethodParametersArray(classNode,methodNode);
-                            write(".push( function(){ return ");
+                            write(".push( new Type ( function(){ return ");
                             var type :any = parameter.type;
+                            var isArray = type.elementType ? true : false;
+                            if (isArray) {
+                              type = type.elementType;
+                            }
                             if (type && type.typeName) {
                                 var str = <string> (type.typeName.text);
                                 write("typeof " + str + " != 'undefined' ? " + str + " : undefined" );
@@ -3274,7 +3278,9 @@ module ts {
                             } else {
                                 write("undefined");
                             }
-                            write(" });");
+
+
+                            write(" }) , " + isArray + ", );");
                             writeLine();
                         })
 
